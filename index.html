@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azure TTS 文本转语音</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: row;
+            gap: 20px;
+            padding: 20px;
+            background-color: #e8e4d4;
+        }
+        .left-panel, .right-panel {
+            flex: 1;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+        }
+        .left-panel {
+            max-width: 50%;
+        }
+        .right-panel {
+            max-width: 50%;
+        }
+        textarea {
+            width: calc(100% - 24px);
+            height: 150px;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            color: #525151;
+            background-color: #e8e4d4;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-weight: bold;
+            border: 1px solid #acaba3;
+        }
+        button:hover {
+            border: 1px solid #525151;
+        }
+        .voice-button, .style-button {
+            margin: 5px;
+            padding: 5px;
+            font-size: 10px;
+            cursor: pointer;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .voice-button.selected, .style-button.selected {
+            background-color: #5f573f;
+            color: white;
+        }
+        .slider-container {
+            margin: 20px 0;
+        }
+        .slider-container label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        .slider {
+            width: 100%;
+        }
+        .config-input {
+            margin-bottom: 20px;
+        }
+        .config-input label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        .config-input input {
+            width: calc(100% - 24px);
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        /* 加载动画 */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #5f573f;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: none; /* 默认隐藏 */
+            margin-left: 10px;
+        }
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" href="https://fastly.jsdelivr.net/gh/xxximg/oss/img/i.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="https://fastly.jsdelivr.net/gh/xxximg/oss/img/i.ico" type="image/x-icon">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azure TTS 文本转语音</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: row;
+            gap: 20px;
+            padding: 20px;
+            background-color: #e8e4d4;
+        }
+        .left-panel, .right-panel {
+            flex: 1;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+        }
+        .left-panel {
+            max-width: 50%;
+        }
+        .right-panel {
+            max-width: 50%;
+        }
+        textarea {
+            width: calc(100% - 24px);
+            height: 150px;
+            padding: 10px;
+            font-size: 13px;
+            border: 2px solid #000000;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            color: #525151;
+            background-color: #e8e4d4;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-weight: bold;
+            border: 2px solid #acaba3;
+        }
+        button:hover {
+            border: 2px solid #525151;
+        }
+        .voice-button, .style-button {
+            margin: 5px;
+            padding: 5px;
+            font-size: 10px;
+            cursor: pointer;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+        }
+        .voice-button.selected, .style-button.selected {
+            background-color: #5f573f;
+            color: white;
+        }
+        .slider-container {
+            margin: 20px 0;
+        }
+        .slider-container label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        .slider {
+            width: 100%;
+        }
+        .config-input {
+            margin-bottom: 20px;
+        }
+        .config-input label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        .config-input input {
+            width: calc(100% - 24px);
+            padding: 10px;
+            font-size: 16px;
+            border: 2px solid #cbc09f;
+            border-radius: 5px;
+        }
+        /* 加载动画 */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #5f573f;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: none; /* 默认隐藏 */
+            margin-left: 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .button-container {
+            display: flex;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- 左侧面板：文本输入和语音合成 -->
+    <div class="left-panel">
+        <h2>文本转语音</h2>
+        <div class="config-input">
+            <label for="subscriptionKeyInput">Azure 订阅密钥：</label>
+            <input type="password" id="subscriptionKeyInput" placeholder="输入您的 Azure 订阅密钥">
+        </div>
+        <div class="config-input">
+            <label for="regionInput">Azure 区域：</label>
+            <input type="text" id="regionInput" placeholder="输入您的 Azure 区域（例如：eastus）">
+        </div>
+        <textarea id="textInput" placeholder="输入要合成的文本..."></textarea>
+        <div class="button-container">
+            <button onclick="synthesizeSpeech()">合成语音</button>
+            <div id="loader" class="loader"></div>
+        </div>
+        <audio id="audioPlayer" controls style="width: 100%; margin-top: 20px;"></audio>
+    </div>
+
+    <!-- 右侧面板：语音、风格、语速、语调设置 -->
+    <div class="right-panel">
+        <!-- 语音选择 -->
+        <h3>选择语音：</h3>
+        <div id="voicesContainer"></div>
+
+        <!-- 风格选择 -->
+        <h3>选择风格：(没有或者不选就是默认！)</h3>
+        <div id="stylesContainer"></div>
+
+        <!-- 语速设置 -->
+        <div class="slider-container">
+            <label for="rateSlider">语速 (0.5 - 2.0)：<span id="rateValue">1.0</span></label>
+            <input type="range" id="rateSlider" class="slider" min="0.5" max="2.0" step="0.1" value="1.0" oninput="updateRateValue()">
+        </div>
+
+        <!-- 语调设置 -->
+        <div class="slider-container">
+            <label for="pitchSlider">语调 (0.5 - 2.0)：<span id="pitchValue">1.0</span></label>
+            <input type="range" id="pitchSlider" class="slider" min="0.5" max="2.0" step="0.1" value="1.0" oninput="updatePitchValue()">
+        </div>
+    </div>
+
+    <script>
+        let subscriptionKey = '';
+        let region = '';
+        const endpoint = `https://${region}.tts.speech.microsoft.com/cognitiveservices/voices/list`;
+        const ttsEndpoint = `https://${region}.tts.speech.microsoft.com/cognitiveservices/v1`;
+
+        let voices = []; // 存储所有语音数据
+        let selectedVoice = null; // 当前选中的语音
+        let selectedStyle = null; // 当前选中的风格
+        let rate = 1.0; // 语速
+        let pitch = 1.0; // 语调
+
+        // 页面加载时从 localStorage 加载配置
+        window.onload = () => {
+            loadConfig();
+            loadVoices();
+        };
+
+        // 从 localStorage 加载配置
+        function loadConfig() {
+            subscriptionKey = localStorage.getItem('subscriptionKey') || '';
+            region = localStorage.getItem('region') || '';
+            document.getElementById('subscriptionKeyInput').value = subscriptionKey;
+            document.getElementById('regionInput').value = region;
+
+            const savedRate = localStorage.getItem('rate');
+            if (savedRate) {
+                rate = parseFloat(savedRate);
+                document.getElementById('rateSlider').value = rate;
+                document.getElementById('rateValue').textContent = rate;
+            }
+
+            const savedPitch = localStorage.getItem('pitch');
+            if (savedPitch) {
+                pitch = parseFloat(savedPitch);
+                document.getElementById('pitchSlider').value = pitch;
+                document.getElementById('pitchValue').textContent = pitch;
+            }
+        }
+
+        // 保存配置到 localStorage
+        function saveConfig() {
+            localStorage.setItem('subscriptionKey', subscriptionKey);
+            localStorage.setItem('region', region);
+            localStorage.setItem('rate', rate);
+            localStorage.setItem('pitch', pitch);
+        }
+
+        // 获取语音列表
+        async function loadVoices() {
+            subscriptionKey = document.getElementById('subscriptionKeyInput').value;
+            region = document.getElementById('regionInput').value;
+
+            if (!subscriptionKey || !region) {
+                alert('请输入您的Azure订阅密钥和区域。');
+                return;
+            }
+
+            try {
+                const response = await fetch(`https://${region}.tts.speech.microsoft.com/cognitiveservices/voices/list`, {
+                    method: 'GET',
+                    headers: {
+                        'Ocp-Apim-Subscription-Key': subscriptionKey
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP错误！ status: ${response.status}`);
+                }
+
+                const allVoices = await response.json();
+                // 过滤出中国的语音（语言代码为 zh- 或 CN）
+                voices = allVoices.filter(voice => voice.Locale.toLowerCase().startsWith('zh') || voice.Locale.toUpperCase().includes('CN'));
+                populateVoiceButtons(voices);
+            } catch (error) {
+                console.error('Error fetching voices:', error);
+            }
+        }
+
+        // 填充语音按钮
+        function populateVoiceButtons(voices) {
+            const container = document.getElementById('voicesContainer');
+            container.innerHTML = ''; // 清空容器
+
+            voices.forEach(voice => {
+                const button = document.createElement('button');
+                button.className = 'voice-button';
+
+                // 删除 LocalName 中的括号内容
+                const localName = voice.LocalName.replace(/\(.*?\)/g, '').trim();
+
+                // 翻译性别
+                const gender = voice.Gender === 'Female' ? '女' : '男';
+
+                // 设置按钮文本
+                button.textContent = `${localName} - ${gender}`;
+
+                button.dataset.shortName = voice.ShortName; // 存储语音的 ShortName
+                button.onclick = () => onVoiceButtonClick(voice, button);
+                container.appendChild(button);
+            });
+        }
+
+        // 当点击语音按钮时
+        function onVoiceButtonClick(voice, button) {
+            // 移除之前选中按钮的样式
+            const buttons = document.querySelectorAll('.voice-button');
+            buttons.forEach(btn => btn.classList.remove('selected'));
+
+            // 为当前选中的按钮添加样式
+            button.classList.add('selected');
+
+            // 设置当前选中的语音
+            selectedVoice = voice;
+
+            // 显示支持的风格
+            populateStyleButtons(voice);
+        }
+
+        // 填充风格按钮
+        function populateStyleButtons(voice) {
+            const container = document.getElementById('stylesContainer');
+            container.innerHTML = ''; // 清空容器
+
+            // 风格翻译映射表
+            const styleTranslations = {
+                'assistant': '助手',
+                'chat': '聊天',
+                'customerservice': '客服',
+                'newscast': '新闻播报',
+                'affectionate': '深情',
+                'angry': '生气',
+                'calm': '平静',
+                'cheerful': '欢快',
+                'disgruntled': '不满',
+                'fearful': '害怕',
+                'gentle': '温柔',
+                'lyrical': '抒情',
+                'sad': '悲伤',
+                'serious': '严肃',
+                'poetry-reading': '诗歌朗诵',
+                'friendly': '友好',
+                'chat-casual': '随意聊天',
+                'whispering': '耳语',
+                'sorry': '抱歉',
+                'excited': '兴奋',
+                'embarrassed': '尴尬',
+                'depressed': '沮丧',
+                'envious': '羡慕',
+                'empathetic': '同情心',
+                'story': '叙事',
+                'narration-professional': '专业旁白',
+                'newscast-casual': '新闻广播 - 休闲',
+                'livecommercial': '现场广告',
+                'advertisement-upbeat': '广告 - 乐观',
+                'sports-commentary': '体育解说',
+                'sports-commentary-excited': '激情体育解说',
+                'documentary-narration': '纪录片旁白',
+                'narration-relaxed': '轻松叙述'
+                // 可以根据需要添加更多风格翻译
+            };
+
+            if (voice.StyleList && voice.StyleList.length > 0) {
+                voice.StyleList.forEach(style => {
+                    const button = document.createElement('button');
+                    button.className = 'style-button';
+                    // 翻译风格名称
+                    const translatedStyle = styleTranslations[style.toLowerCase()] || style;
+                    button.textContent = translatedStyle;
+                    button.onclick = () => onStyleButtonClick(style, button);
+                    container.appendChild(button);
+                });
+            } else {
+                const message = document.createElement('p');
+                message.textContent = '该语音不支持任何风格。';
+                container.appendChild(message);
+            }
+        }
+
+        // 当点击风格按钮时
+        function onStyleButtonClick(style, button) {
+            // 移除之前选中按钮的样式
+            const buttons = document.querySelectorAll('.style-button');
+            buttons.forEach(btn => btn.classList.remove('selected'));
+
+            // 为当前选中的按钮添加样式
+            button.classList.add('selected');
+
+            // 设置当前选中的风格
+            selectedStyle = style;
+        }
+
+        // 更新语速显示
+        function updateRateValue() {
+            rate = document.getElementById('rateSlider').value;
+            document.getElementById('rateValue').textContent = rate;
+            saveConfig();
+        }
+
+        // 更新语调显示
+        function updatePitchValue() {
+            pitch = document.getElementById('pitchSlider').value;
+            document.getElementById('pitchValue').textContent = pitch;
+            saveConfig();
+        }
+
+        // 合成语音
+        async function synthesizeSpeech() {
+            if (!selectedVoice) {
+                alert('请先选择声音。');
+                return;
+            }
+
+            const text = document.getElementById('textInput').value;
+            if (!text) {
+                alert('请输入一些文字。');
+                return;
+            }
+
+            // 显示加载动画
+            const loader = document.getElementById('loader');
+            loader.style.display = 'inline-block';
+
+            const ssml = `
+                <speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' 
+                       xmlns:mstts='http://www.w3.org/2001/mstts' xml:lang='${selectedVoice.Locale}'>
+                    <voice name='${selectedVoice.ShortName}'>
+                        <prosody rate='${rate * 100 - 100}%' pitch='${(pitch - 1) * 50}%'>
+                            ${selectedStyle ? `<mstts:express-as style="${selectedStyle}">${text}</mstts:express-as>` : text}
+                        </prosody>
+                    </voice>
+                </speak>
+            `;
+
+            try {
+                const response = await fetch(`https://${region}.tts.speech.microsoft.com/cognitiveservices/v1`, {
+                    method: 'POST',
+                    headers: {
+                        'Ocp-Apim-Subscription-Key': subscriptionKey,
+                        'Content-Type': 'application/ssml+xml',
+                        'X-Microsoft-OutputFormat': 'audio-16khz-128kbitrate-mono-mp3'
+                    },
+                    body: ssml
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const audioBlob = await response.blob();
+                const audioUrl = URL.createObjectURL(audioBlob);
+                const audioPlayer = document.getElementById('audioPlayer');
+                audioPlayer.src = audioUrl;
+                audioPlayer.play();
+            } catch (error) {
+                console.error('Error synthesizing speech:', error);
+                alert('Failed to synthesize speech. Please check the console for details.');
+            } finally {
+                // 隐藏加载动画
+                loader.style.display = 'none';
+            }
+        }
+
+        // 监听订阅密钥和区域的输入变化
+        document.getElementById('subscriptionKeyInput').addEventListener('input', (e) => {
+            subscriptionKey = e.target.value;
+            saveConfig();
+        });
+
+        document.getElementById('regionInput').addEventListener('input', (e) => {
+            region = e.target.value;
+            saveConfig();
+        });
+    </script>
+    <style>
+        .corner-links {
+            position: fixed;
+            left: 16px;
+            bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 1000;
+        }
+        .corner-links a {
+            display: inline-flex;
+            align-items: center;
+            color: #333;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .corner-links a:hover {
+            text-decoration: underline;
+        }
+        .corner-links img, .corner-links svg {
+            width: 22px;
+            height: 22px;
+            margin-right: 6px;
+        }
+    </style>
+    <style>
+        .corner-links {
+            position: fixed;
+            left: 20px;
+            bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 9999;
+        }
+        .corner-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            color: #212529;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .corner-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .corner-link img,
+        .corner-link svg {
+            width: 22px;
+            height: 22px;
+        }
+        .corner-link .label {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+    </style>
+    <div class="corner-links" aria-label="页面固定链接">
+        <a class="corner-link" href="https://github.com/IIIStudio/AlisoPan" target="_blank" rel="noopener noreferrer" aria-label="前往 GitHub 仓库">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+                <path fill="#24292F" d="M12 .5a12 12 0 0 0-3.79 23.41c.6.11.82-.26.82-.58v-2.02c-3.35.73-4.06-1.61-4.06-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.74.08-.74 1.2.09 1.83 1.23 1.83 1.23 1.07 1.83 2.8 1.3 3.49.99.11-.78.42-1.3.76-1.6-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.51.12-3.15 0 0 1.01-.32 3.3 1.23.96-.27 1.99-.4 3.01-.4s2.05.14 3.01.4c2.29-1.55 3.3-1.23 3.3-1.23.66 1.64.25 2.85.12 3.15.77.84 1.24 1.91 1.24 3.22 0 4.61-2.8 5.63-5.47 5.93.43.37.81 1.1.81 2.22v3.29c0 .32.22.7.83.58A12 12 0 0 0 12 .5Z"/>
+            </svg>
+            <span class="label">AlisoPan</span>
+        </a>
+        <a class="corner-link" href="https://cnb.cool/IIIStudio/PHP/AlisoPan/" target="_blank" rel="noopener noreferrer" aria-label="前往 AlisoPan 文档页面">
+            <img src="https://docs.cnb.cool/images/logo/svg/LogoColorfulIcon.svg" alt="CNB Logo">
+        </a>
+    </div>
+</body>
+</html>
