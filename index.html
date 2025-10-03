@@ -1,104 +1,4 @@
 <!DOCTYPE html>
-<html lang="zh">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Azure TTS 文本转语音</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: row;
-            gap: 20px;
-            padding: 20px;
-            background-color: #e8e4d4;
-        }
-        .left-panel, .right-panel {
-            flex: 1;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 10px;
-        }
-        .left-panel {
-            max-width: 50%;
-        }
-        .right-panel {
-            max-width: 50%;
-        }
-        textarea {
-            width: calc(100% - 24px);
-            height: 150px;
-            padding: 10px;
-            font-size: 16px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            color: #525151;
-            background-color: #e8e4d4;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            font-weight: bold;
-            border: 1px solid #acaba3;
-        }
-        button:hover {
-            border: 1px solid #525151;
-        }
-        .voice-button, .style-button {
-            margin: 5px;
-            padding: 5px;
-            font-size: 10px;
-            cursor: pointer;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        .voice-button.selected, .style-button.selected {
-            background-color: #5f573f;
-            color: white;
-        }
-        .slider-container {
-            margin: 20px 0;
-        }
-        .slider-container label {
-            display: block;
-            margin-bottom: 5px;
-            font-size: 14px;
-        }
-        .slider {
-            width: 100%;
-        }
-        .config-input {
-            margin-bottom: 20px;
-        }
-        .config-input label {
-            display: block;
-            margin-bottom: 5px;
-            font-size: 14px;
-        }
-        .config-input input {
-            width: calc(100% - 24px);
-            padding: 10px;
-            font-size: 16px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        /* 加载动画 */
-        .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #5f573f;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-            display: none; /* 默认隐藏 */
-            margin-left: 10px;
-        }
-<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -209,11 +109,195 @@
             align-items: center;
         }
     </style>
+<style id="appStyles">
+  /* 统一滑块样式（语速/语调） */
+  .slider {
+    -webkit-appearance: none; appearance: none;
+    height: 10px; border-radius: 999px;
+    background: rgba(255,255,255,.12);
+    border: 1px solid rgba(255,255,255,.14);
+    outline: none;
+  }
+  .slider::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: #38bdf8; border: 2px solid #0ea5e9;
+    box-shadow: 0 0 0 3px rgba(56,189,248,.25);
+    cursor: pointer;
+  }
+  .slider::-moz-range-thumb {
+    width: 18px; height: 18px; border-radius: 50%;
+    background: #38bdf8; border: 2px solid #0ea5e9;
+    box-shadow: 0 0 0 3px rgba(56,189,248,.25);
+    cursor: pointer;
+  }
+  .slider:focus {
+    box-shadow: 0 0 0 3px rgba(56,189,248,.25);
+    border-color: rgba(56,189,248,.6);
+  }
+
+  /* 标题左侧图标（统一类样式） */
+  .title-row { display:flex; align-items:center; gap:10px; }
+  .title-icons { display:inline-flex; align-items:center; gap:8px; }
+  .title-icons a {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:6px 8px; border-radius:8px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,.16);
+    color:#fff; text-decoration:none;
+    transition: all .2s ease;
+  }
+  .title-icons a:hover { background:#13213b; border-color:rgba(255,255,255,.3); transform: translateY(-1px); }
+  .title-icons svg, .title-icons img { width:20px; height:20px; }
+
+  /* 自定义播放器（进度与音量滑块保持同风格） */
+  .ap-bar, .ap-vol {
+    -webkit-appearance: none; appearance: none;
+    height: 8px; border-radius: 999px;
+    background: rgba(255,255,255,.12);
+    border: 1px solid rgba(255,255,255,.14);
+    outline: none;
+  }
+  .ap-bar::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #38bdf8; border: 2px solid #0ea5e9;
+    box-shadow: 0 0 0 3px rgba(56,189,248,.25);
+    cursor: pointer;
+  }
+  .ap-bar::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #38bdf8; border: 2px solid #0ea5e9;
+    box-shadow: 0 0 0 3px rgba(56,189,248,.25);
+    cursor: pointer;
+  }
+  .ap-vol::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: #f59e0b; border: 2px solid #d97706;
+    box-shadow: 0 0 0 3px rgba(245,158,11,.25);
+    cursor: pointer;
+  }
+  .ap-vol::-moz-range-thumb {
+    width: 14px; height: 14px; border-radius: 50%;
+    background: #f59e0b; border: 2px solid #d97706;
+    box-shadow: 0 0 0 3px rgba(245,158,11,.25);
+    cursor: pointer;
+  }
+  /* 深色滚动条（WebKit/Chromium 浏览器） */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track {
+    background: rgba(255,255,255,.08);
+    border-radius: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #1f2d4a, #13213b);
+    border: 2px solid rgba(255,255,255,.15);
+    border-radius: 10px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #243554, #162746);
+    border-color: rgba(255,255,255,.25);
+  }
+  /* Firefox 滚动条 */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #243554 rgba(255,255,255,.10);
+  }
+
+  /* 合并覆盖样式（深色背景、按钮、输入等） */
+  body {
+    background: radial-gradient(1200px 600px at 80% -100%, rgba(56,189,248,0.2), transparent), linear-gradient(135deg, #0f172a, #1e293b 60%, #0b1220) !important;
+    color: #fff !important;
+  }
+  .left-panel, .right-panel {
+    background: rgba(0,0,0,.22) !important;
+    border: 1px solid rgba(255,255,255,.12) !important;
+  }
+  textarea, input {
+    background: rgba(0,0,0,.28) !important;
+    border: 1px solid rgba(255,255,255,.16) !important;
+    color: #fff !important;
+  }
+  .button-container button,
+  button,
+  .voice-button,
+  .style-button {
+    background: #111c32 !important;
+    color: #fff !important;
+    border: 1px solid rgba(255,255,255,.22) !important;
+    padding: 10px 18px !important;
+    font-size: 15px !important;
+    border-radius: 10px !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,.25) !important;
+  }
+  .button-container button:hover,
+  button:hover,
+  .voice-button:hover,
+  .style-button:hover {
+    background: #13213b !important;
+    border-color: rgba(255,255,255,.3) !important;
+    box-shadow: 0 3px 10px rgba(0,0,0,.3) !important;
+  }
+  .voice-button.selected,
+  .style-button.selected {
+    background: #1f2d4a !important;
+    border-color: rgba(56,189,248,.7) !important;
+    box-shadow: 0 0 0 2px rgba(56,189,248,.25) inset, 0 3px 10px rgba(0,0,0,.35) !important;
+    color: #fff !important;
+  }
+  .voice-button,
+  .style-button {
+    padding: 8px 12px !important;
+    font-size: 13px !important;
+  }
+
+  /* 合并播放器样式（卡片与按钮） */
+  .audio-card {
+    margin-top: 20px;
+    background: rgba(15,23,42,.9);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 14px;
+    box-shadow: 0 10px 40px rgba(0,0,0,.4);
+    padding: 12px;
+  }
+  #audioPlayer { display: none; } /* 隐藏原生控件，使用自定义 UI */
+  .audio-ui { display: flex; flex-direction: column; gap: 10px; }
+  .audio-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .ap-btn {
+    background: #111c32;
+    color: #fff;
+    border: 1px solid rgba(255,255,255,.16);
+    padding: 8px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 14px;
+    transition: background .2s ease, border-color .2s ease, transform .06s ease;
+  }
+  .ap-btn:hover { background: #13213b; border-color: rgba(255,255,255,.3); }
+  .ap-btn:active { transform: translateY(1px); }
+  .ap-time { min-width: 120px; font-variant-numeric: tabular-nums; opacity: .9; }
+
+</style>
 </head>
 <body>
     <!-- 左侧面板：文本输入和语音合成 -->
     <div class="left-panel">
-        <h2>文本转语音</h2>
+        <h2 class="title-row">
+          <span class="title-icons">
+            <a href="https://github.com/IIIStudio/AzureTTSweb" target="_blank" rel="noopener noreferrer" aria-label="前往 GitHub 仓库">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+                <path fill="#ffffff" d="M12 .5a12 12 0 0 0-3.79 23.41c.6.11.82-.26.82-.58v-2.02c-3.35.73-4.06-1.61-4.06-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.74.08-.74 1.2.09 1.83 1.23 1.83 1.23 1.07 1.83 2.8 1.3 3.49.99.11-.78.42-1.3.76-1.6-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.51.12-3.15 0 0 1.01-.32 3.3 1.23.96-.27 1.99-.4 3.01-.4s2.05.14 3.01.4c2.29-1.55 3.3-1.23 3.3-1.23.66 1.64.25 2.85.12 3.15.77.84 1.24 1.91 1.24 3.22 0 4.61-2.8 5.63-5.47 5.93.43.37.81 1.1.81 2.22v3.29c0 .32.22.7.83.58A12 12 0 0 0 12 .5Z"/>
+              </svg>
+            </a>
+            <a href="https://cnb.cool/IIIStudio/HTML/AzureTTSweb/" target="_blank" rel="noopener noreferrer" aria-label="前往 AzureTTSweb 文档页面">
+              <img src="https://docs.cnb.cool/images/logo/svg/LogoColorfulIcon.svg" alt="CNB Logo">
+            </a>
+          </span>
+          <span>文本转语音</span>
+        </h2>
         <div class="config-input">
             <label for="subscriptionKeyInput">Azure 订阅密钥：</label>
             <input type="password" id="subscriptionKeyInput" placeholder="输入您的 Azure 订阅密钥">
@@ -227,7 +311,20 @@
             <button onclick="synthesizeSpeech()">合成语音</button>
             <div id="loader" class="loader"></div>
         </div>
-        <audio id="audioPlayer" controls style="width: 100%; margin-top: 20px;"></audio>
+        <!-- 自定义音频播放器（替换原生 controls） -->
+        <div class="audio-card">
+            <audio id="audioPlayer"></audio>
+            <div class="audio-ui">
+                <div class="audio-row">
+                    <button id="apPlay" class="ap-btn" aria-label="播放">▶️ 播放</button>
+                    <div class="ap-time"><span id="apCur">00:00</span> / <span id="apDur">00:00</span></div>
+                    <button id="apMute" class="ap-btn" aria-label="静音">🔈 声音</button>
+                    <input id="apVol" class="ap-vol" type="range" min="0" max="1" step="0.01" value="1" aria-label="音量">
+                    <button id="apDl" class="ap-btn" aria-label="下载" title="下载音频">⬇️ 下载</button>
+                </div>
+                <input id="apBar" class="ap-bar" type="range" min="0" max="100" step="0.1" value="0" aria-label="播放进度">
+            </div>
+        </div>
     </div>
 
     <!-- 右侧面板：语音、风格、语速、语调设置 -->
@@ -307,7 +404,7 @@
             region = document.getElementById('regionInput').value;
 
             if (!subscriptionKey || !region) {
-                alert('请输入您的Azure订阅密钥和区域。');
+                showTip('请输入您的 Azure 订阅密钥和区域');
                 return;
             }
 
@@ -462,13 +559,13 @@
         // 合成语音
         async function synthesizeSpeech() {
             if (!selectedVoice) {
-                alert('请先选择声音。');
+                showTip('请先选择声音');
                 return;
             }
 
             const text = document.getElementById('textInput').value;
             if (!text) {
-                alert('请输入一些文字。');
+                showTip('请输入一些文字');
                 return;
             }
 
@@ -509,7 +606,7 @@
                 audioPlayer.play();
             } catch (error) {
                 console.error('Error synthesizing speech:', error);
-                alert('Failed to synthesize speech. Please check the console for details.');
+                showTip('合成失败，请检查控制台');
             } finally {
                 // 隐藏加载动画
                 loader.style.display = 'none';
@@ -526,50 +623,325 @@
             region = e.target.value;
             saveConfig();
         });
+    // 合并：提示弹窗与自定义播放器脚本（整理为单一脚本块）
+    // 居中提示弹窗
+    function showTip(msg) {
+      var ov = document.getElementById('tipOverlay');
+      var box = document.getElementById('tipMessage');
+      if (ov && box) {
+        box.textContent = msg || '';
+        ov.style.display = 'block';
+      }
+    }
+    function hideTip() {
+      var ov = document.getElementById('tipOverlay');
+      if (ov) ov.style.display = 'none';
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+      var btn = document.getElementById('tipCloseBtn');
+      var ov = document.getElementById('tipOverlay');
+      if (btn) btn.addEventListener('click', hideTip);
+      if (ov) ov.addEventListener('click', function (e) {
+        if (e.target === ov) hideTip();
+      });
+    });
+
+    // 自定义播放器逻辑：播放/暂停、进度、时间、音量、静音、下载
+    (function() {
+      const A = {
+        audio: document.getElementById('audioPlayer'),
+        playBtn: document.getElementById('apPlay'),
+        muteBtn: document.getElementById('apMute'),
+        cur: document.getElementById('apCur'),
+        dur: document.getElementById('apDur'),
+        bar: document.getElementById('apBar'),
+        vol: document.getElementById('apVol'),
+        dl: document.getElementById('apDl'),
+      };
+      if (!A.audio) return;
+
+      function fmtTime(sec) {
+        if (!isFinite(sec) || sec < 0) sec = 0;
+        const m = Math.floor(sec / 60);
+        const s = Math.floor(sec % 60);
+        return String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+      }
+      function syncPlayBtn() {
+        A.playBtn.textContent = A.audio.paused ? '▶️ 播放' : '⏸️ 暂停';
+      }
+      function syncMuteBtn() {
+        A.muteBtn.textContent = A.audio.muted ? '🔇 静音' : '🔈 声音';
+      }
+      function syncDur() {
+        A.dur.textContent = fmtTime(A.audio.duration || 0);
+        A.bar.max = (A.audio.duration || 0).toFixed(1);
+      }
+      function syncCur() {
+        const t = A.audio.currentTime || 0;
+        A.cur.textContent = fmtTime(t);
+        A.bar.value = t.toFixed(1);
+      }
+
+      // 事件绑定
+      A.playBtn.addEventListener('click', function() {
+        if (A.audio.src) {
+          if (A.audio.paused) A.audio.play().catch(()=>{});
+          else A.audio.pause();
+          syncPlayBtn();
+        }
+      });
+      A.muteBtn.addEventListener('click', function() {
+        A.audio.muted = !A.audio.muted;
+        syncMuteBtn();
+      });
+      A.vol.addEventListener('input', function() {
+        A.audio.volume = parseFloat(A.vol.value || '1');
+        if (A.audio.volume === 0) { A.audio.muted = true; } else { A.audio.muted = false; }
+        syncMuteBtn();
+      });
+      A.bar.addEventListener('input', function() {
+        const v = parseFloat(A.bar.value || '0');
+        if (isFinite(v)) { A.audio.currentTime = v; }
+      });
+      A.audio.addEventListener('timeupdate', syncCur);
+      A.audio.addEventListener('loadedmetadata', function() { syncDur(); syncCur(); });
+      A.audio.addEventListener('play', syncPlayBtn);
+      A.audio.addEventListener('pause', syncPlayBtn);
+      A.audio.addEventListener('volumechange', syncMuteBtn);
+
+      // 下载当前音频
+      A.dl.addEventListener('click', function() {
+        if (!A.audio.src) return;
+        try {
+          const a = document.createElement('a');
+          a.href = A.audio.src;
+          a.download = 'AzureTTS-Audio.mp3';
+          document.body.appendChild(a); a.click();
+          setTimeout(()=>{ a.remove(); }, 100);
+        } catch (_) {}
+      });
+
+      // 当合成后设置了 src，立即同步时长（synthesizeSpeech 完成后会设置 audioPlayer.src）
+      const _setSrc = function() { if (A.audio.readyState >= 1) { syncDur(); syncCur(); } };
+      A.audio.addEventListener('canplay', _setSrc);
+      A.audio.addEventListener('loadeddata', _setSrc);
+    })();
+
     </script>
-    <style>
-        .corner-links {
-            position: fixed;
-            left: 20px;
-            bottom: 20px;
-            display: flex;
-            align-items: center;
-            z-index: 9999;
-        }
-        .corner-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 10px;
-            border-radius: 8px;
-            color: #212529;
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-        .corner-link:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-        }
-        .corner-link img,
-        .corner-link svg {
-            width: 22px;
-            height: 22px;
-        }
-        .corner-link .label {
-            font-weight: 600;
-            font-size: 0.95rem;
-        }
-    </style>
-    <div class="corner-links" aria-label="页面固定链接">
-        <a class="corner-link" href="https://github.com/IIIStudio/AzureTTSweb" target="_blank" rel="noopener noreferrer" aria-label="前往 GitHub 仓库">
-            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
-                <path fill="#24292F" d="M12 .5a12 12 0 0 0-3.79 23.41c.6.11.82-.26.82-.58v-2.02c-3.35.73-4.06-1.61-4.06-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.74.08-.74 1.2.09 1.83 1.23 1.83 1.23 1.07 1.83 2.8 1.3 3.49.99.11-.78.42-1.3.76-1.6-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.51.12-3.15 0 0 1.01-.32 3.3 1.23.96-.27 1.99-.4 3.01-.4s2.05.14 3.01.4c2.29-1.55 3.3-1.23 3.3-1.23.66 1.64.25 2.85.12 3.15.77.84 1.24 1.91 1.24 3.22 0 4.61-2.8 5.63-5.47 5.93.43.37.81 1.1.81 2.22v3.29c0 .32.22.7.83.58A12 12 0 0 0 12 .5Z"/>
-            </svg>
-            <span class="label">AzureTTSweb</span>
-        </a>
-        <a class="corner-link" href="https://cnb.cool/IIIStudio/HTML/AzureTTSweb/" target="_blank" rel="noopener noreferrer" aria-label="前往 AzureTTSweb 文档页面">
-            <img src="https://docs.cnb.cool/images/logo/svg/LogoColorfulIcon.svg" alt="CNB Logo">
-        </a>
+<!-- 提示弹窗：居中显示，样式与 AzureTTSweb 保持一致 -->
+<div id="tipOverlay" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.6);backdrop-filter:saturate(140%) blur(2px);">
+  <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(15,23,42,.95);border:1px solid rgba(255,255,255,.12);border-radius:14px;width:min(520px,90vw);max-width:520px;box-shadow:0 10px 40px rgba(0,0,0,.5);">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.08);">
+      <div style="font-weight:700;">提示</div>
+      <button id="tipCloseBtn" style="padding:6px 10px;border-radius:8px;background:#111c32;color:#fff;border:1px solid rgba(255,255,255,.16);">关闭</button>
     </div>
+    <div id="tipMessage" style="padding:14px 16px;font-size:14px;color:#fff;"></div>
+  </div>
+</div>
+
+<!-- 覆盖样式-->
+<style media="not all">
+  body {
+    background: radial-gradient(1200px 600px at 80% -100%, rgba(56,189,248,0.2), transparent), linear-gradient(135deg, #0f172a, #1e293b 60%, #0b1220) !important;
+    color: #fff !important;
+  }
+  .left-panel, .right-panel {
+    background: rgba(0,0,0,.22) !important;
+    border: 1px solid rgba(255,255,255,.12) !important;
+  }
+  textarea, input {
+    background: rgba(0,0,0,.28) !important;
+    border: 1px solid rgba(255,255,255,.16) !important;
+    color: #fff !important;
+  }
+  .button-container button,
+  button,
+  .voice-button,
+  .style-button {
+    background: #111c32 !important;
+    color: #fff !important;
+    border: 1px solid rgba(255,255,255,.22) !important;
+    padding: 10px 18px !important;
+    font-size: 15px !important;
+    border-radius: 10px !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,.25) !important;
+  }
+  .button-container button:hover,
+  button:hover,
+  .voice-button:hover,
+  .style-button:hover {
+    background: #13213b !important;
+    border-color: rgba(255,255,255,.3) !important;
+  }
+  .voice-button.selected,
+  .style-button.selected {
+    background: #1f2d4a !important;
+    border-color: rgba(56,189,248,.6) !important;
+    color: #fff !important;
+  }
+  /* 更显眼的按钮选中态与悬停态 */
+  .button-container button:hover,
+  button:hover,
+  .voice-button:hover,
+  .style-button:hover {
+    background: #13213b !important;
+    border-color: rgba(255,255,255,.35) !important;
+    box-shadow: 0 3px 10px rgba(0,0,0,.3) !important;
+  }
+  .voice-button.selected,
+  .style-button.selected {
+    background: #1f2d4a !important;
+    border-color: rgba(56,189,248,.7) !important; /* 青色高亮 */
+    box-shadow: 0 0 0 2px rgba(56,189,248,.25) inset, 0 3px 10px rgba(0,0,0,.35) !important;
+  }
+  .voice-button,
+  .style-button {
+    padding: 8px 12px !important;
+    font-size: 13px !important;
+  }
+
+  /* 音频播放器卡片化样式（跨浏览器尽可能美化） */
+  #audioPlayer {
+    width: 100% !important;
+    margin-top: 20px !important;
+    background: rgba(0,0,0,.28) !important;
+    border: 1px solid rgba(255,255,255,.16) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,.25) inset, 0 6px 14px rgba(0,0,0,.25) !important;
+    padding: 6px !important; /* 部分浏览器对 audio 外框有效 */
+  }
+  /* WebKit 控件区域（Chrome/Edge/Safari） */
+  audio::-webkit-media-controls-panel {
+    background: transparent !important;
+    border-radius: 10px !important;
+  }
+  audio::-webkit-media-controls-play-button,
+  audio::-webkit-media-controls-pause-button,
+  audio::-webkit-media-controls-mute-button,
+  audio::-webkit-media-controls-volume-slider,
+  audio::-webkit-media-controls-time-remaining-display,
+  audio::-webkit-media-controls-current-time-display {
+    filter: brightness(1.05) contrast(1.05) !important;
+  }
+  audio::-webkit-media-controls-enclosure {
+    border-radius: 10px !important;
+    overflow: hidden !important;
+  }
+
+  /* 标题左侧图标样式（整理去内联） */
+  .title-row { display:flex; align-items:center; gap:10px; }
+  .title-icons { display:inline-flex; align-items:center; gap:8px; }
+  .title-icons a {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:6px 8px; border-radius:8px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,.16);
+    color:#fff; text-decoration:none;
+    transition: all .2s ease;
+  }
+  .title-icons a:hover { background:#13213b; border-color:rgba(255,255,255,.3); transform: translateY(-1px); }
+  .title-icons svg, .title-icons img { width:20px; height:20px; }
+
+  /* 统一滑动条样式（语速/语调） */
+  .slider {
+    -webkit-appearance: none; appearance: none;
+    height: 10px; border-radius: 999px;
+    background: rgba(255,255,255,.12);
+    border: 1px solid rgba(255,255,255,.14);
+    outline: none;
+  }
+  .slider::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: #38bdf8; border: 2px solid #0ea5e9;
+    box-shadow: 0 0 0 3px rgba(56,189,248,.25);
+    cursor: pointer;
+  }
+  .slider::-moz-range-thumb {
+    width: 18px; height: 18px; border-radius: 50%;
+    background: #38bdf8; border: 2px solid #0ea5e9;
+    box-shadow: 0 0 0 3px rgba(56,189,248,.25);
+    cursor: pointer;
+  }
+  .slider:focus {
+    box-shadow: 0 0 0 3px rgba(56,189,248,.25);
+    border-color: rgba(56,189,248,.6);
+  }
+</style>
+
+
+<!-- 自定义播放器样式-->
+<style media="not all">
+  .audio-card {
+    margin-top: 20px;
+    background: rgba(15,23,42,.9);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 14px;
+    box-shadow: 0 10px 40px rgba(0,0,0,.4);
+    padding: 12px;
+  }
+  #audioPlayer { display: none; } /* 隐藏原生控件，使用自定义 UI */
+  .audio-ui { display: flex; flex-direction: column; gap: 10px; }
+  .audio-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .ap-btn {
+    background: #111c32;
+    color: #fff;
+    border: 1px solid rgba(255,255,255,.16);
+    padding: 8px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 14px;
+    transition: background .2s ease, border-color .2s ease, transform .06s ease;
+  }
+  .ap-btn:hover { background: #13213b; border-color: rgba(255,255,255,.3); }
+  .ap-btn:active { transform: translateY(1px); }
+  .ap-time { min-width: 120px; font-variant-numeric: tabular-nums; opacity: .9; }
+  .ap-bar {
+    -webkit-appearance: none; appearance: none;
+    width: 100%;
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.12);
+    border: 1px solid rgba(255,255,255,.14);
+    outline: none;
+  }
+  .ap-bar::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #38bdf8; border: 2px solid #0ea5e9;
+    box-shadow: 0 0 0 3px rgba(56,189,248,.25);
+    cursor: pointer;
+  }
+  .ap-bar::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #38bdf8; border: 2px solid #0ea5e9;
+    box-shadow: 0 0 0 3px rgba(56,189,248,.25);
+    cursor: pointer;
+  }
+  .ap-vol {
+    width: 120px;
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.12);
+    border: 1px solid rgba(255,255,255,.14);
+    outline: none;
+  }
+  .ap-vol::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: #f59e0b; border: 2px solid #d97706;
+    box-shadow: 0 0 0 3px rgba(245,158,11,.25);
+    cursor: pointer;
+  }
+  .ap-vol::-moz-range-thumb {
+    width: 14px; height: 14px; border-radius: 50%;
+    background: #f59e0b; border: 2px solid #d97706;
+    box-shadow: 0 0 0 3px rgba(245,158,11,.25);
+    cursor: pointer;
+  }
+</style>
+
 </body>
 </html>
